@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "description": "a package to maintain grid browser sessions for parallel automated testing",
   "main": "app.js",
+  "bin": {
+    "grid-manager": "./app.js"
+  },
   "scripts": {
     "test": "./node_modules/.bin/mocha specs",
     "start": "node app.js"
