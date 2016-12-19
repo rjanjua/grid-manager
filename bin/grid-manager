@@ -2,6 +2,21 @@
 
 const Server = require("../app.js");
 
-const server = new Server("http://localhost:4444/wd/hub");
+var gridUrl = 'localhost:4444/wd/hub'
+process.argv.slice(2).forEach( (arg) => {
+    const parts = arg.split("=");
+    const command = parts[0];
+    const value = parts[1];
+
+    switch(command){
+        case '--gridUrl':
+            gridUrl = value;
+            break;
+        default:
+            break;
+    }
+})
+
+const server = new Server(gridUrl);
 
 server.start();
