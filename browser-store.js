@@ -31,9 +31,7 @@ BrowserStore.prototype.startSession = function(){
 }
 
 BrowserStore.prototype.closeSession = function(sessionId) {
-  console.log('before: ', this.browsers);
   this.browsers = this.browsers.filter( (b) => b.sessionId != sessionId);
-  console.log('after: ', this.browsers);
   const driver = WebDriver.attachToSession(executor, sessionId);
 
   return driver.quit().then( () => {

@@ -1,6 +1,6 @@
 {
   "name": "grid-manager",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "a package to maintain grid browser sessions for parallel automated testing",
   "main": "client.js",
   "bin": {

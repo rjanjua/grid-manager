@@ -10,7 +10,7 @@ Client.prototype.startNewSession = function(){
         request.post('http://localhost:9876/new')
         .end( (err, res) => {
             startCount = startCount + 1;
-            resolve(true);
+            resolve(res.body);
         });
     });
 }
@@ -36,7 +36,7 @@ Client.prototype.releaseSession = function(sesh){
 
 Client.prototype.closeSession = function(sesh){
     return new Promise((resolve, reject) => {
-        request.post('http://localhost:9876/close/' + sesh)
+        request.post('http://localhost:9876/close/' + sesh.id)
         .end( (err, res) => {
             closeCount = closeCount + 1;
             resolve({closed: true});
