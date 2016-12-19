@@ -1,3 +1,7 @@
 #! /usr/bin/env node
 
-require("../app.js");
+const Server = require("../app.js");
+
+const server = new Server("http://localhost:4444/wd/hub");
+
+server.start();

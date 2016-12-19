@@ -5,20 +5,16 @@ const wdClient = wdHttp.HttpClient;
 const wdExecutor = wdHttp.Executor;
 const WebDriver = webdriver.WebDriver;
 
-const client = new wdClient('http://localhost:4444/wd/hub');
-const executor = new wdExecutor(client);
-
-
 const Browser = require('./browser');
 
-
-const BrowserStore = function(){
+const BrowserStore = function(gridUrl){
   this.browsers = [];
+  this.gridUrl = gridUrl; 
 };
 
 BrowserStore.prototype.startSession = function(){
   const driver = new webdriver.Builder()
-    .usingServer('http://localhost:4444/wd/hub')
+    .usingServer(this.gridUrl)
     .forBrowser('chrome')
     .build();
 
@@ -32,6 +28,10 @@ BrowserStore.prototype.startSession = function(){
 
 BrowserStore.prototype.closeSession = function(sessionId) {
   this.browsers = this.browsers.filter( (b) => b.sessionId != sessionId);
+  
+  const client = new wdClient(this.gridUrl);
+  const executor = new wdExecutor(client);
+
   const driver = WebDriver.attachToSession(executor, sessionId);
 
   return driver.quit().then( () => {
