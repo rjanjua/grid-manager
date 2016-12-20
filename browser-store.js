@@ -12,6 +12,12 @@ const BrowserStore = function(gridUrl){
   this.gridUrl = gridUrl; 
 };
 
+function getDriver(gridUrl, sessionId){
+  const client = new wdClient(gridUrl);
+  const executor = new wdExecutor(client);
+  return WebDriver.attachToSession(executor, sessionId); 
+}
+
 BrowserStore.prototype.startSession = function(){
   const driver = new webdriver.Builder()
     .usingServer(this.gridUrl)
@@ -29,10 +35,7 @@ BrowserStore.prototype.startSession = function(){
 BrowserStore.prototype.closeSession = function(sessionId) {
   this.browsers = this.browsers.filter( (b) => b.sessionId != sessionId);
 
-  const client = new wdClient(this.gridUrl);
-  const executor = new wdExecutor(client);
-
-  const driver = WebDriver.attachToSession(executor, sessionId);
+  const driver = getDriver(this.gridUrl, sessionId);
 
   return driver.quit().then( () => {
     return Promise.resolve();   
@@ -79,8 +82,20 @@ BrowserStore.prototype.getSession = function(){
 
 BrowserStore.prototype.releaseSession = function(sessionId){
   var browser =  this.browsers.find( (b) => b.sessionId == sessionId);
+  const driver = getDriver(this.gridUrl, sessionId);
 
-  browser.unlock();
+  driver.getCurrentUrl().then(null, (err) => {
+    this.closeSession(sessionId);
+    this.startSession();
+    console.log(err);
+  });;
+
+  if (browser === undefined){
+      this.closeSession(sessionId);
+      this.startSession();
+  } else{
+      browser.unlock();
+  }
 }
 
 module.exports = BrowserStore;
