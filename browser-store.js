@@ -28,7 +28,7 @@ BrowserStore.prototype.startSession = function(){
 
 BrowserStore.prototype.closeSession = function(sessionId) {
   this.browsers = this.browsers.filter( (b) => b.sessionId != sessionId);
-  
+
   const client = new wdClient(this.gridUrl);
   const executor = new wdExecutor(client);
 
@@ -41,7 +41,7 @@ BrowserStore.prototype.closeSession = function(sessionId) {
   });
 }
 
-Browser.prototype.getSessionIds = function(){
+BrowserStore.prototype.getSessionIds = function(){
   const sessionIds = browsers.map( b => {
     return b.getSessionId();
   });
@@ -49,10 +49,32 @@ Browser.prototype.getSessionIds = function(){
   return Promise.all(sessionIds);
 }
 
+BrowserStore.prototype.getAvailable = function(){
+    return this.browsers.find( (b) => b.locked == false);
+}
+
 BrowserStore.prototype.getSession = function(){
-  const browser =  this.browsers.find( (b) => b.locked == false);
-  browser.lock();
-  return browser.getSessionId();
+  var browser = this.getAvailable();
+  return new Promise( (resolve, reject) => {
+    if (browser == undefined){
+      setTimeout( () => {
+        browser = this.getAvailable();
+        if (browser == undefined){
+          reject();
+        } else{
+          resolve(browser);
+        }
+      }, 5000)
+    } else{
+      resolve(browser);
+    }
+  })
+  .then( (b) => {
+    b.lock();
+    return b.getSessionId();
+  })
+
+
 }
 
 BrowserStore.prototype.releaseSession = function(sessionId){

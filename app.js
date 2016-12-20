@@ -32,6 +32,9 @@ Server.prototype.start = function() {
           console.log("get  session: ", sessionId);
 
       res.status(200).json(sessionId);
+    }).catch( () => {
+      console.log("could not find session");
+      res.status(404).json({sessionId: null});
     });
   });
 
