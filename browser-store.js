@@ -120,14 +120,16 @@ BrowserStore.prototype.releaseSession = function(sessionId){
     if (browser != undefined){
       winston.log('warn', 'browser cannot be found', {session: sessionId.toString()})
       return this.resetSession(browser.sessionId);
-    } else{
-      Promise.resolve("Could not find session to release");
     }
     
   })
   .then( () => {
-    winston.log('verbose', 'unlocking browser with session ', sessionId)
-    Promise.resolve(browser.unlock());
+    if (browser != undefined){
+      winston.log('verbose', 'unlocking browser with session ', sessionId)
+      Promise.resolve(browser.unlock());
+    } else {
+       Promise.resolve("browser session to release cannot be found");
+    }
   });
 
 }
