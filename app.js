@@ -34,7 +34,7 @@ Server.prototype.start = function() {
       res.status(200).json(sessionId);
     }).catch( () => {
       console.log("could not find session");
-      res.status(404).json({sessionId: null});
+      res.status(404).send();
     });
   });
 
@@ -43,8 +43,10 @@ Server.prototype.start = function() {
     const sessionId = req.params.sessionId;
         console.log("release  session: ", sessionId);
 
-    this.browserStore.releaseSession(sessionId);
-    res.status(200).send();
+    this.browserStore.releaseSession(sessionId)
+    .then( () => {
+      res.status(200).send();
+    });
   });
 
   app.listen(9876, function () {

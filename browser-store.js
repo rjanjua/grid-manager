@@ -97,6 +97,11 @@ BrowserStore.prototype.getSession = function(){
 
 }
 
+BrowserStore.prototype.resetSession = function() {
+    return this.closeSession(sessionId)
+    .then( () => this.startSession());
+}
+
 BrowserStore.prototype.releaseSession = function(sessionId){
   var browser =  this.browsers.find( (b) => b.sessionId == sessionId);
 
@@ -104,25 +109,27 @@ BrowserStore.prototype.releaseSession = function(sessionId){
 
   const driver = getDriver(this.gridUrl, sessionId);
 
-  driver.getCurrentUrl().then(null, (err) => {
+  return driver.getCurrentUrl()
+  .then(null, (err) => {
 
     winston.log('error', 'Could not reach session', {
       session: sessionId, 
       error: err
     });
 
-    this.closeSession(sessionId);
-    this.startSession();
-  });;
+    return this.resetSession();
+    
+  })
+  .then( () => {
+    if (browser === undefined){
+        winston.log('warn', 'browser cannot be found', {session: sessionId.toString()})
+        return this.resetSession();
+    } else{
+        winston.log('verbose', 'unlocking browser with session ', sessionId)
+        Promise.resolve(browser.unlock());
+    }
+  });
 
-  if (browser === undefined){
-      winston.log('warn', 'browser cannot be found', {session: sessionId})
-      this.closeSession(sessionId);
-      this.startSession();
-  } else{
-      winston.log('verbose', 'unlocking browser with session ', sessionId)
-      browser.unlock();
-  }
 }
 
 module.exports = BrowserStore;

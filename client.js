@@ -22,7 +22,11 @@ Client.prototype.getSession = function() {
     return new Promise((resolve, reject) => { 
         request.get(this.gridManagerUrl +  '/get')
         .end( (err, res) => {
-            resolve(res.body);
+            if (res.status == 404){
+                reject('No available driver');
+            } else {
+                resolve(res.body);
+            }
         });
     });
 }
