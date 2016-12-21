@@ -116,18 +116,18 @@ BrowserStore.prototype.releaseSession = function(sessionId){
       session: sessionId, 
       error: err
     });
-
-    return this.resetSession();
+    
+    if (browser != undefined){
+      winston.log('warn', 'browser cannot be found', {session: sessionId.toString()})
+      return this.resetSession(browser.sessionId);
+    } else{
+      Promise.resolve("Could not find session to release");
+    }
     
   })
   .then( () => {
-    if (browser === undefined){
-        winston.log('warn', 'browser cannot be found', {session: sessionId.toString()})
-        return this.resetSession();
-    } else{
-        winston.log('verbose', 'unlocking browser with session ', sessionId)
-        Promise.resolve(browser.unlock());
-    }
+    winston.log('verbose', 'unlocking browser with session ', sessionId)
+    Promise.resolve(browser.unlock());
   });
 
 }
