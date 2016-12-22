@@ -54,8 +54,8 @@ describe('Browser Store', () => {
     var spy;
     before( () => {
       bs = new BrowserStore('http://this-is-a-test-01010101.com');
-      webdriverStub.WebDriverKlass.prototype.quit = webdriverStub.WebDriverKlass.prototype.quitResolve;
-      spy = sinon.spy(webdriverStub.WebDriverKlass.prototype, 'quit');
+      webdriverStub.WebdriverKlass.prototype.quit = webdriverStub.WebdriverKlass.prototype.quitResolve;
+      spy = sinon.spy(webdriverStub.WebdriverKlass.prototype, 'quit');
 
       return bs.startSession()
       .then( b => {
@@ -92,7 +92,7 @@ describe('Browser Store', () => {
 
     before( () => {
       bs = new BrowserStore('http://this-is-a-test-01010101.com');
-      webdriverStub.WebDriverKlass.prototype.quit = webdriverStub.WebDriverKlass.prototype.quitReject;
+      webdriverStub.WebdriverKlass.prototype.quit = webdriverStub.WebdriverKlass.prototype.quitReject;
 
       session = bs.startSession()
       .then( b => {

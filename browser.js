@@ -5,12 +5,16 @@ const Browser = function(driver_){
 };
 
 Browser.prototype.getSessionId = function(){
-  return this.driver
-  .getSession()
-  .then( (session) => {
-    this.sessionId = session.getId();
-    return this.sessionId;
-  });
+  if(this._sessionId == undefined){ 
+    return this.driver
+    .getSession()
+    .then( (session) => {
+      this._sessionId = session.getId();
+      return this._sessionId;
+    });
+  } else {
+    return Promise.resolve(this._sessionId);
+  }
 }
 
 Browser.prototype.lock = function(){

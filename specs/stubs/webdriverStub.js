@@ -13,34 +13,30 @@ BuilderKlass.prototype.forBrowser = function(url){
 }
 
 BuilderKlass.prototype.build = function(){
-  return Promise.resolve( new WebDriverKlass(-1));
+  return Promise.resolve( new WebdriverKlass(-1));
 }
 
-WebDriverKlass = function(sessionId){
+WebdriverKlass = function(sessionId){
   this.type = 'webdriver';
   this.sessionId = sessionId;
   this.driver = 'test';
 }
 
-WebDriverKlass.prototype.quitResolve = function(){
+WebdriverKlass.prototype.quitResolve = function(){
   return Promise.resolve('quit driver');
 }
 
-WebDriverKlass.prototype.quitReject = function(){
+WebdriverKlass.prototype.quitReject = function(){
   return Promise.reject('did not quit driver');
-}
-
-WebDriverKlass.prototype.getCurrentUrl = function(){
-  return Promise.resolve('http://test.com');
 }
 
 webdriverStub.WebDriver = {
   attachToSession:  (executor, sessionId) => {
-    return new WebDriverKlass(sessionId);
+    return new WebdriverKlass(sessionId);
   }
 };
 
-webdriverStub.WebDriverKlass = WebDriverKlass;
+webdriverStub.WebdriverKlass = WebdriverKlass;
 webdriverStub.Builder = BuilderKlass;
 
 module.exports = webdriverStub;
