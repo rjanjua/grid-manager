@@ -7,7 +7,7 @@
     "grid-manager": "./bin/grid-manager"
   },
   "scripts": {
-    "test": "./node_modules/.bin/mocha specs",
+    "test": "./node_modules/.bin/mocha specs --timeout=10000",
     "start": "node app.js"
   },
   "author": "Rohan Janjua",
@@ -21,7 +21,9 @@
   },
   "devDependencies": {
     "mocha": "^3.2.0",
+    "proxyquire": "^1.7.10",
     "request": "^2.79.0",
+    "sinon": "^1.17.6",
     "unexpected": "^10.20.0"
   }
 }
