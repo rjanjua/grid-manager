@@ -7,13 +7,14 @@
     "grid-manager": "./bin/grid-manager"
   },
   "scripts": {
-    "test": "./node_modules/.bin/mocha specs --timeout=10000",
+    "test": "./node_modules/.bin/mocha specs --timeout=2000",
     "start": "node app.js"
   },
   "author": "Rohan Janjua",
   "license": "ISC",
   "dependencies": {
     "express": "^4.14.0",
+    "rwlock": "^5.0.0",
     "selenium-grid-status": "^0.2.0",
     "selenium-webdriver": "^3.0.1",
     "superagent": "^3.3.1",
@@ -24,6 +25,7 @@
     "proxyquire": "^1.7.10",
     "request": "^2.79.0",
     "sinon": "^1.17.6",
+    "supertest": "^2.0.1",
     "unexpected": "^10.20.0"
   }
 }

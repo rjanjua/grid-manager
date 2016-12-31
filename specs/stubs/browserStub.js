@@ -1,8 +1,7 @@
-const BrowserKlass = function(driver){
-  this.driver = driver;
+const BrowserKlass = function(sessionId){
   this.type = 'browser-klass';
   this.locked = false;
-  this.healthy = true;
+  this._sessionId = sessionId;
 };
 
 BrowserKlass.prototype.lock = function(){};

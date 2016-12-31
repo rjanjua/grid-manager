@@ -6,6 +6,10 @@ const webdriverStub = require('./stubs/webDriverStub');
 const wdHttpStub = { };
 const browserStub = require('./stubs/browserStub');
 
+browserStub.prototype.getSessionId = function(){
+    return this._sessionId;
+}
+
 const BrowserStore = proxyquire('../browser-store', {
   'selenium-webdriver': webdriverStub,
   'selenium-webdriver/http': wdHttpStub,
@@ -14,6 +18,73 @@ const BrowserStore = proxyquire('../browser-store', {
 
 
 describe('Browser Store', () => {
+
+  describe('#_removeBrowserFromStore', () => {
+    
+    var bs;
+
+    beforeEach( () => {
+      bs = new BrowserStore('http://this-is-a-test-01010101.com');
+      return bs.startSession()
+      .then( b => {
+        b._sessionId = 1;
+      });
+    });
+
+    it('throws an error when the browser does not exist', () => {
+      assert.throws( () => bs._removeBrowserFromStore(10), Error);
+    });
+
+    it('removes a browser', () => {
+      bs._removeBrowserFromStore(1);
+      assert.equal(bs.browsers.length, 0);
+    });
+
+    it('allows only one remove to the browsers list at a time', () => {
+      const removePromise = (sId) => bs._removeBrowserFromStore(sId);
+      const newSession =  (sId) =>  new browserStub({}, sId);
+      for (var i = 2; i < 1001; i++){
+        bs.browsers.push(newSession(i));
+      }
+      const removeAll = bs.browsers.map( (b) => removePromise(b._sessionId));
+      return Promise.all(removeAll)
+      .then( (browsers) => {
+        assert.equal(bs.browsers.length, 0)
+      });
+    });
+    
+  })
+
+  describe('#_addBrowserToStore', () => {
+       
+    var bs;
+
+    beforeEach( () => {
+      bs = new BrowserStore('http://this-is-a-test-01010101.com');
+      return bs.startSession()
+      .then( b => {
+        b._sessionId = 1;
+      });
+    });
+
+    it('allows only one write to the browsers list at a time', () => {
+      const removePromise = (sId) => bs._removeBrowserFromStore(sId);
+      const newSession =  (sId) =>  new browserStub({}, sId);
+      for (var i = 2; i < 1001; i++){
+        bs.browsers.push(newSession(i));
+      }
+      const removeAll = bs.browsers.map( (b) => removePromise(b._sessionId));
+      return Promise.all(removeAll)
+      .then( (browsers) => {
+        assert.equal(bs.browsers.length, 0)
+      });
+    });
+
+    it('allows only one add or remove at a time', () => {
+      pending();
+    });
+    
+  })
 
   describe('#startSession',  () => {
     
@@ -59,13 +130,13 @@ describe('Browser Store', () => {
 
       return bs.startSession()
       .then( b => {
-          b.sessionId = 1;
+          b._sessionId = 1;
       })
       .then( () => {
           return bs.startSession();
       })
       .then( b => {
-          b.sessionId = 2;
+          b._sessionId = 2;
       })
       .then( () => {
           return bs.closeSession(1);
@@ -77,7 +148,7 @@ describe('Browser Store', () => {
     });
 
     it('open browsers are still in the browsers list', () => {
-      assert.equal(bs.browsers[0].sessionId, 2);
+      assert.equal(bs.browsers[0]._sessionId, 2);
     });
 
     it('closes the browser', () => {
@@ -96,13 +167,13 @@ describe('Browser Store', () => {
 
       session = bs.startSession()
       .then( b => {
-          b.sessionId = 1;
+          b._sessionId = 1;
       })
       .then( () => {
           return bs.startSession();
       })
       .then( b => {
-          b.sessionId = 2;
+          b._sessionId = 2;
       });
 
       return session;
@@ -122,27 +193,6 @@ describe('Browser Store', () => {
 
   });
 
-  describe('#_removeBrowserFromStore', () => {
-    
-    beforeEach( () => {
-      bs = new BrowserStore('http://this-is-a-test-01010101.com');
-      return bs.startSession()
-      .then( b => {
-        b.sessionId = 1;
-      });
-    });
-
-    it('throws an error when the browser does not exist', () => {
-      assert.throws( () => bs._removeBrowserFromStore(10), Error);
-    });
-
-    it('removes a browser', () => {
-      bs._removeBrowserFromStore(1);
-      assert.equal(bs.browsers.length, 0);
-    });
-    
-  })
-
   describe('#getSession', () => {
     
     describe('when there is a browser available', () => {
@@ -154,7 +204,7 @@ describe('Browser Store', () => {
         bs = new BrowserStore('http://this-is-a-test-01010101.com');
         session = bs.startSession()
         .then( b => {
-          b.sessionId = 12345;
+          b._sessionId = 12345;
         })
         .then(() => bs.getSession());
         return session;
@@ -179,6 +229,8 @@ describe('Browser Store', () => {
 
     describe('when there is no browser available', () => {
       
+      var bs;
+
       beforeEach( () => {
         bs = new BrowserStore('http://this-is-a-test-01010101.com');
       });
@@ -224,7 +276,7 @@ describe('Browser Store', () => {
         session = bs
         .startSession()
         .then( (b) => {
-          b.sessionId = 12345;
+          b._sessionId = 12345;
           return b;
         });
         return session;
@@ -236,7 +288,7 @@ describe('Browser Store', () => {
         return session
         .then( () => bs.releaseSession(12345))
         .then( () => {
-          const b = bs.browsers.find( b => b.sessionId == 12345);
+          const b = bs.browsers.find( b => b._sessionId == 12345);
           assert(spy.calledOnce);
         })
       });
@@ -261,7 +313,7 @@ describe('Browser Store', () => {
         session = bs
         .startSession()
         .then( (b) => {
-          b.sessionId = 12345;
+          b._sessionId = 12345;
           return b;
         });
         return session;

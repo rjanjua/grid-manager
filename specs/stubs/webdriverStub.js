@@ -13,7 +13,7 @@ BuilderKlass.prototype.forBrowser = function(url){
 }
 
 BuilderKlass.prototype.build = function(){
-  return Promise.resolve( new WebdriverKlass(-1));
+  return new WebdriverKlass(-1);
 }
 
 WebdriverKlass = function(sessionId){
@@ -28,6 +28,10 @@ WebdriverKlass.prototype.quitResolve = function(){
 
 WebdriverKlass.prototype.quitReject = function(){
   return Promise.reject('did not quit driver');
+}
+
+WebdriverKlass.prototype.getSession = function(){
+  return Promise.resolve(1);
 }
 
 webdriverStub.WebDriver = {

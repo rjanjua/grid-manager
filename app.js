@@ -7,17 +7,17 @@ const Server = function(gridUrl) {
 
 Server.prototype.start = function() {
 
-  const app = express();
+  this.app = express();
 
-  app.post('/new', (req, res) => {
+  this.app.post('/new', (req, res) => {
       console.log("creating new session")
       this.browserStore.startSession()
-      .then((b) => b.getSessionId())
+      .then((b) => b._sessionId)
       .then( (id) => res.status(200).json({id: id}));
 
   });
 
-  app.post('/close/:sessionId', (req, res) => {
+  this.app.post('/close/:sessionId', (req, res) => {
       const sessionId = req.params.sessionId;
       console.log("closing  session: ", sessionId);
 
@@ -26,19 +26,18 @@ Server.prototype.start = function() {
       .catch( () => res.status(404).json({success: false}));
   });
 
-  app.get('/get', (req, res) => { 
+  this.app.get('/get', (req, res) => { 
     this.browserStore.getSession()
     .then((sessionId) => {
-          console.log("get  session: ", sessionId);
-
-      res.status(200).json(sessionId);
-    }).catch( () => {
+      console.log("get  session: ", sessionId);
+      res.status(200).json({sessionId: sessionId});
+    }).catch( (err) => {
       console.log("could not find session");
-      res.status(404).send();
+      res.status(404).json({err: err});
     });
   });
 
-  app.post('/release/:sessionId', (req, res) => { 
+  this.app.post('/release/:sessionId', (req, res) => { 
     
     const sessionId = req.params.sessionId;
         console.log("release  session: ", sessionId);
@@ -49,7 +48,7 @@ Server.prototype.start = function() {
     });
   });
 
-  app.listen(9876, function () {
+  this.app.listen(9876, function () {
     console.log('Example app listening on port 9876!')
   });
 }

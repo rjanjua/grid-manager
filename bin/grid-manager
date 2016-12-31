@@ -2,7 +2,8 @@
 
 const Server = require("../app.js");
 
-var gridUrl = 'localhost:4444/wd/hub'
+var gridUrl = 'localhost:4444/wd/hub';
+
 process.argv.slice(2).forEach( (arg) => {
     const parts = arg.split("=");
     const command = parts[0];

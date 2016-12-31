@@ -32,26 +32,30 @@ BrowserStore.prototype.startSession = function(){
     .usingServer(this.gridUrl)
     .forBrowser('chrome')
     .build();
-    
-  return driver.then( () => {
-    const browser = new Browser(driver);
-    this.browsers.push(browser);
-    
-    winston.log('info', 'started new session', browser.sessionId);
-    
-    return browser;
-  });
+  
+  var session;
 
+  return driver.getSession().then(s => {
+    const browser = this._addBrowserToStore(s);
+    return browser;
+  }); 
+}
+
+BrowserStore.prototype._addBrowserToStore = function(session){
+    const browser = new Browser(session);
+    this.browsers.push(browser);
+    winston.log('info', 'started new session', browser._sessionId);
+    return browser;
 }
 
 BrowserStore.prototype._removeBrowserFromStore = function(sessionId){
-  const browser = this.browsers.find( b => b.sessionId == sessionId );
+  const browser = this.findSession(sessionId)
   
   if (browser == undefined){
-    throw Error('could not find browser to remove');
+    throw Error('could not find browser to remove with sessionId: ' + sessionId);
   }
 
-  this.browsers = this.browsers.filter( (b) => b.sessionId != sessionId);
+  this.browsers = this.browsers.filter( (b) => b._sessionId != sessionId);
   return this.browsers;
 }
 
@@ -79,11 +83,11 @@ BrowserStore.prototype.getSession = function(){
       winston.log('warn', 'could not find available session', this.browsers);
       reject('no browser available');
     } else{
-      winston.log('info','returning browser ', browser.sessionId);
+      winston.log('info','returning browser ', browser._sessionId);
       browser.lock();
-      resolve(browser.sessionId);
+      resolve(browser._sessionId);
     }
-  })
+  });
 }
 
 BrowserStore.prototype.resetSession = function(sessionId) {
@@ -92,17 +96,22 @@ BrowserStore.prototype.resetSession = function(sessionId) {
           (err) => this.startSession());
 }
 
+BrowserStore.prototype.findSession = function(sessionId){
+  return this.browsers.find( b => b._sessionId == sessionId);
+}
+
 BrowserStore.prototype.releaseSession = function(sessionId){
-  var browser =  this.browsers.find( (b) => b.sessionId == sessionId);
   winston.log('info', 'releasing session: ', {session: sessionId});
+  
+  const browser =  this.findSession(sessionId);
 
   if(browser == undefined){
     winston.log('info', "browser session to release cannot be found", sessionId);
     return Promise.reject("browser with session[" + sessionId + "] does not exist"); 
   } else {      
-    winston.log('info', 'unlocking browser with session ', sessionId);
+    winston.log('info', 'unlocking browser with session ', browser._sessionId);
     browser.unlock();
-    return Promise.resolve(sessionId)
+    return Promise.resolve(browser._sessionId)
   }
 }
 

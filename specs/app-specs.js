@@ -1,67 +1,53 @@
-const expect = require('unexpected');
+const assert = require('assert');
+const request = require('supertest');
+const Server = require('../app.js');
+const server = new Server('http://localhost:4444/wd/hub');
 
-const app = require('../index.js');
-const Client = app.Client;
+server.start();
 
-//new app.Server("http://localhost:4444/wd/hub").start();
-
+const agent = request.agent(server.app);
 
 function pending() {
-    expect('test', 'to be', 'pending');
+  assert();
 }
 
-describe.skip('browser-starter', () => {
+ function hasSessionIdKey(res) {
+    if (!('sessionId' in res.body)) throw new Error("missing sessionId key");
+  }
+
+describe('browser-starter', () => {
     
-    it('should start a browser in the grid', () => {
-        const gm = new Client("http://localhost:9876");
-        const startAndClose = () => {
-            var session = null;
-            return gm.startNewSession()
-            .then( () => {
-                return gm.getSession();
-            }).then( () => {
-                return gm.getSession();
-            })
-            .then( (sesh) => {
-                console.log(sesh.toString());
-                session = sesh;
-                return gm.releaseSession(sesh)
-            })
-            .then( () => {
-                console.log(session)
-                return gm.closeSession(session)
-            });
-        }
+  it('should start and release a browser', (done) => { 
+    var sessionId;
 
-        return startAndClose();
-        
-    })
+    const get = () => { 
+      agent
+      .get('/get')
+      .expect( (res) => {
+        sessionId = res.body.sessionId;
+      })
+      .expect(hasSessionIdKey)
+      .expect(200, release);
+    };
+    
+    const release = () => { 
+      setTimeout( () => {
+        agent
+        .post('/release/' + sessionId)
+        .expect(200, close)
+      }, 500);
+    };
 
-    it('should start and release a browser', () => {
-        const gm = new Client("http://localhost:9876");
-        const startAndClose = () => {
-            var session = null;
-            return gm.startNewSession()
-            .then( () => {
-                return gm.getSession();
-            })
-            .then( (sesh) => {
-                console.log(sesh.toString());
-                session = sesh;
-                return gm.releaseSession(sesh)
-            })
-            .then( () => {
-                console.log(session)
-                return gm.closeSession(session)
-            });
-        }
+    const close = () => {
+      agent
+      .post('/close/' + sessionId)
+      .expect(200, done);
+    };
 
-        return startAndClose();
+    agent.post('/new')
+         .expect(200, get);
 
-    })
+  })
 
-    it('should shut down all browsers that it started',  () =>{
-        pending();
-    })
 
 })
