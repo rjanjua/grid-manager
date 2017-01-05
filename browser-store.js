@@ -1,4 +1,7 @@
 const winston_ = require('winston');
+const request = require('superagent');
+const _ = require('lodash');
+
 const winston = new (winston_.Logger)({
   transports: [
     new (winston_.transports.File)({ filename: 'somefile.log' })
@@ -17,7 +20,7 @@ const Browser = require('./browser');
 
 const BrowserStore = function(gridUrl){
   this.browsers = [];
-  this.gridUrl = gridUrl; 
+  this.gridUrl = gridUrl + "/wd/hub"; 
 };
 
 function getDriver(gridUrl, sessionId){
@@ -50,13 +53,12 @@ BrowserStore.prototype._addBrowserToStore = function(session){
 
 BrowserStore.prototype._removeBrowserFromStore = function(sessionId){
   const browser = this.findSession(sessionId)
-  
   if (browser == undefined){
     throw Error('could not find browser to remove with sessionId: ' + sessionId);
   }
 
-  this.browsers = this.browsers.filter( (b) => b._sessionId != sessionId);
-  return this.browsers;
+  const removableIndex = this.browsers.map( b => b._sessionId).indexOf(sessionId);
+  this.browsers.splice(removableIndex, 1);  
 }
 
 
@@ -90,6 +92,10 @@ BrowserStore.prototype.getSession = function(){
   });
 }
 
+BrowserStore.prototype.getSessionList = function() {
+  return this.browsers.map( b => b._sessionId);
+}
+
 BrowserStore.prototype.resetSession = function(sessionId) {
     return this.closeSession(sessionId)
     .then( () => this.startSession(), 
@@ -114,5 +120,61 @@ BrowserStore.prototype.releaseSession = function(sessionId){
     return Promise.resolve(browser._sessionId)
   }
 }
+
+BrowserStore.prototype.init = function(){
+  activeSessions = this.getActiveSessions(this.gridUrl);
+
+  return activeSessions.then( (sessions) => {
+    sessions.forEach( s => {
+      if(s != null && s != undefined){
+        this._addBrowserToStore(s);
+      }
+    });
+  });
+}
+
+BrowserStore.prototype.removeInactiveSessions = function(){
+  return this.getActiveSessions()
+  .then( sessions => {
+    
+    const currentSessions = this.browsers.map( b => b._sessionId);
+    const activeSessions = sessions.map( s => s.id_ );
+
+    const inactiveSessions = _.difference(currentSessions, activeSessions);
+
+    inactiveSessions.forEach(s => {
+      this._removeBrowserFromStore(s);
+    });
+  });
+}
+
+BrowserStore.prototype.getActiveSessions = function(){
+  var messageFromGrid;
+
+  return new Promise( (resolve, reject) => {
+    request
+    .get(this.gridUrl + "/status")
+    .end( (err, res) => {
+      messageFromGrid = res.body.value.message;
+      const sessions = parseSessions(messageFromGrid);
+      resolve(sessions);
+    });
+  })
+}
+
+function parseSessions(message) {
+  const startSessionsIndex = message.lastIndexOf('[');
+  const endSessionsIndex = message.lastIndexOf(']');
+
+  const sessionsString = message.substring(startSessionsIndex + 1, endSessionsIndex);
+  const sessionsDataArray = sessionsString.split(',');
+  const sessionsArray = sessionsDataArray.map( data => {
+    const sessionId = data.trim().split(' ')[2];
+    
+    return sessionId != undefined ? {id_ : sessionId} : undefined;
+  });
+  return sessionsArray.filter(s => s != undefined);
+}
+
 
 module.exports = BrowserStore;

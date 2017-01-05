@@ -1,13 +1,15 @@
 const express = require('express');
+const request = require('superagent');
+
 const BrowserStore = require('./browser-store');
 
 const Server = function(gridUrl) {
   this.browserStore = new BrowserStore(gridUrl);
+  this.gridUrl = gridUrl;
 }
 
-Server.prototype.start = function() {
-
-  this.app = express();
+Server.prototype.bootstrap = function() {
+    this.app = express();
 
   this.app.post('/new', (req, res) => {
       console.log("creating new session")
@@ -27,9 +29,9 @@ Server.prototype.start = function() {
   });
 
   this.app.get('/get', (req, res) => { 
-    this.browserStore.getSession()
+    this.browserStore.removeInactiveSessions()
+    .then( () => this.browserStore.getSession())
     .then((sessionId) => {
-      console.log("get  session: ", sessionId);
       res.status(200).json({sessionId: sessionId});
     }).catch( (err) => {
       console.log("could not find session");
@@ -48,9 +50,29 @@ Server.prototype.start = function() {
     });
   });
 
-  this.app.listen(9876, function () {
-    console.log('Example app listening on port 9876!')
+  this.app.get('/sessions', (req, res) => {
+    const sessions = this.browserStore.getSessionList();
+
+    const responseBody = { sessions: sessions };
+
+    res.status(200).json(responseBody);
   });
+
+  this.server = this.app.listen(9876, function () {
+    console.log('grid-manager listening on port 9876!')
+  });
+}
+
+Server.prototype.close = function(){
+  this.server.close();
+}
+
+Server.prototype.start = function() {
+
+  activeSessions = this.browserStore.getActiveSessions();
+
+  return this.browserStore.init()
+  .then( () => this.bootstrap());
 }
 
 module.exports = Server;

@@ -1,21 +1,32 @@
 const assert = require('assert');
-
+const nock = require('nock');
 const sinon = require('sinon');
 const proxyquire = require('proxyquire');
-const webdriverStub = require('./stubs/webDriverStub');
+const webdriverStub = require('../stubs/webDriverStub');
 const wdHttpStub = { };
-const browserStub = require('./stubs/browserStub');
+const browserStub = require('../stubs/browserStub');
 
 browserStub.prototype.getSessionId = function(){
     return this._sessionId;
 }
 
-const BrowserStore = proxyquire('../browser-store', {
+const BrowserStore = proxyquire('../../browser-store', {
   'selenium-webdriver': webdriverStub,
   'selenium-webdriver/http': wdHttpStub,
   './browser': browserStub
 });
 
+  const nockHubStatusWithMessage = (msg) => {
+    nock('http://this-is-a-test-01010101.com')
+    .get('/wd/hub/status')
+    .times(100)
+    .reply(200, {
+      "status": 13,
+      "value": {
+        "message": msg
+      }
+    });
+  }
 
 describe('Browser Store', () => {
 
@@ -41,18 +52,20 @@ describe('Browser Store', () => {
     });
 
     it('allows only one remove to the browsers list at a time', () => {
-      const removePromise = (sId) => bs._removeBrowserFromStore(sId);
-      const newSession =  (sId) =>  new browserStub({}, sId);
-      for (var i = 2; i < 1001; i++){
+      const newSession =  (sId) =>  new browserStub(sId);
+
+      for (var i = 2; i <= 10; i++){
         bs.browsers.push(newSession(i));
       }
-      const removeAll = bs.browsers.map( (b) => removePromise(b._sessionId));
-      return Promise.all(removeAll)
-      .then( (browsers) => {
-        assert.equal(bs.browsers.length, 0)
-      });
+
+      for (var i = 1; i <= 10; i++){
+        bs._removeBrowserFromStore(i)
+      }
+
+      assert.equal(bs.browsers.length, 0);
+      
     });
-    
+
   })
 
   describe('#_addBrowserToStore', () => {
@@ -68,20 +81,43 @@ describe('Browser Store', () => {
     });
 
     it('allows only one write to the browsers list at a time', () => {
-      const removePromise = (sId) => bs._removeBrowserFromStore(sId);
-      const newSession =  (sId) =>  new browserStub({}, sId);
+      const addPromise = (sId) => bs._addBrowserToStore(sId);
+      const newSession =  (sId) =>  new browserStub(sId);
+      const addAll = [];
       for (var i = 2; i < 1001; i++){
-        bs.browsers.push(newSession(i));
+       addAll.push(addPromise(newSession(i)));
       }
-      const removeAll = bs.browsers.map( (b) => removePromise(b._sessionId));
-      return Promise.all(removeAll)
+      return Promise.all(addAll)
       .then( (browsers) => {
-        assert.equal(bs.browsers.length, 0)
+        assert.equal(bs.browsers.length, 1000)
       });
     });
 
     it('allows only one add or remove at a time', () => {
-      pending();
+      const remove = (sId) => bs._removeBrowserFromStore(sId);
+      const add = (sId) => bs._addBrowserToStore(sId);
+      const newSession =  (sId) =>  new browserStub(sId);
+
+
+      // add ten promises
+      for (var i = 1; i <= 10; i++){
+        add("first " + i);
+      }
+
+      // remove the first ten and add a second ten
+      for (var i = 1; i <= 10; i++){
+        add("second " + i);
+        remove("first " + i);
+      }
+
+      // make sure first ten removed and second ten are the present browsers
+      const sessions = bs.browsers.map( (b) => b._sessionId).slice(1);
+      const hasFirst = sessions.filter( (s) => s.includes("first"));
+      const hasSecond = sessions.filter( (s) => s.includes("second"));
+
+      assert.equal(hasFirst.length, 0, 'all first browsers should be removed');
+      assert.equal(hasSecond.length, 10, 'all second browsers should be added');
+
     });
     
   })
@@ -332,5 +368,64 @@ describe('Browser Store', () => {
 
   });
 
+  describe('#getActiveSessions', () => {
+
+    beforeEach( () => {
+      bs = new BrowserStore('http://this-is-a-test-01010101.com');
+    })
+
+    afterEach( () => {
+      nock.cleanAll();
+    });
+
+    it('returns all the active sessions', () => {
+      nockHubStatusWithMessage("Session [(null externalkey)] not available and is not among the last 1000 terminated sessions.\nActive sessions are[ext. key ghi-789, ext. key def-456, ext. key abc-123]")
+      return bs.getActiveSessions()
+        .then(sessions => {
+          assert.equal(sessions.length, 3);
+          const hasNull = sessions.includes(null);
+          assert(!hasNull, 'should not contain null');
+        });
+    });
+
+    describe('when there are no active sessions', () => {
+
+      it('does not add any active sessions', () => {
+
+        nockHubStatusWithMessage("Session [(null externalkey)] not available and is not among the last 1000 terminated sessions.\nActive sessions are[]");
+        return bs.getActiveSessions()
+        .then(sessions => {
+          assert.equal(sessions.length, 0);
+        });
+
+      });
+
+    });
+
+  });
+
+  describe('#removeInactiveSessions', () => {
+
+    beforeEach( () => {
+      bs = new BrowserStore('http://this-is-a-test-01010101.com');
+    })
+
+    afterEach( () => {
+      nock.cleanAll();
+    });
+
+    it('should remove sessions that exist in the browser list, but not active session list', () => {
+      nockHubStatusWithMessage('abc abc [a a abc-123, b b bbb-222]');
+      
+      bs._addBrowserToStore('abc-123');
+      bs._addBrowserToStore('bbb-222');
+      bs._addBrowserToStore('ccc-333');
+
+      bs.removeInactiveSessions()
+      .then( () => {
+        assert.equal(bs.browsers.length, 2)
+      });
+    });
+  })
 
 });

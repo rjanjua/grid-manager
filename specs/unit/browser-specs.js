@@ -1,5 +1,5 @@
-const Browser = require('../browser');
-const webdriverStub = require('./stubs/webdriverStub');
+const Browser = require('../../browser');
+const webdriverStub = require('../stubs/webdriverStub');
 const assert = require('assert');
 describe('Browser', () => {
 

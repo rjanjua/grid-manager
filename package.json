@@ -7,13 +7,17 @@
     "grid-manager": "./bin/grid-manager"
   },
   "scripts": {
-    "test": "./node_modules/.bin/mocha specs --timeout=2000",
+
+    "test": "./node_modules/.bin/mocha specs --recursive --timeout=10000",
+    "e2e": "./node_modules/.bin/mocha specs/e2e --timeout=10000",
+    "unit": "./node_modules/.bin/mocha specs/unit --timeout=2000",
     "start": "node app.js"
   },
   "author": "Rohan Janjua",
   "license": "ISC",
   "dependencies": {
     "express": "^4.14.0",
+    "lodash": "^4.17.4",
     "rwlock": "^5.0.0",
     "selenium-grid-status": "^0.2.0",
     "selenium-webdriver": "^3.0.1",
@@ -22,6 +26,7 @@
   },
   "devDependencies": {
     "mocha": "^3.2.0",
+    "nock": "^9.0.2",
     "proxyquire": "^1.7.10",
     "request": "^2.79.0",
     "sinon": "^1.17.6",
