@@ -2,7 +2,7 @@
   "name": "grid-manager",
   "version": "0.0.1",
   "description": "a package to maintain grid browser sessions for parallel automated testing",
-  "main": "client.js",
+  "main": "./lib/client/client.js",
   "bin": {
     "grid-manager": "./bin/grid-manager"
   },
@@ -10,7 +10,7 @@
     "test": "./node_modules/.bin/mocha specs --recursive --timeout=10000",
     "e2e": "./node_modules/.bin/mocha specs/e2e --timeout=60000",
     "unit": "./node_modules/.bin/mocha specs/unit --timeout=2000",
-    "start": "node app.js"
+    "start": "./bin/grid-manager"
   },
   "author": "Rohan Janjua",
   "license": "ISC",

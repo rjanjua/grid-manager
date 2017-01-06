@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 
-const Server = require("../app.js");
+const Server = require("../lib/server/app");
 
 var gridUrl = 'http://localhost:4444';
 

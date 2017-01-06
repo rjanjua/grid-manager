@@ -1,6 +1,6 @@
 const assert = require('assert');
 const request = require('supertest');
-const Server = require('../../app.js');
+const Server = require('../../lib').Server;
 const selenium = require('selenium-standalone');
 
 function hasSessionIdKey(res) {

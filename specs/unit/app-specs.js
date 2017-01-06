@@ -1,7 +1,7 @@
 const assert = require('assert');
 const request = require('supertest');
 const nock = require('nock');
-const Server = require('../../app.js');
+const Server = require('../../lib').Server;
 
 function pending() {
   assert();

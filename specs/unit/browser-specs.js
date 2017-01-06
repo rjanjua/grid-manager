@@ -1,4 +1,4 @@
-const Browser = require('../../browser');
+const Browser = require('../../lib/server/browser');
 const webdriverStub = require('../stubs/webdriverStub');
 const assert = require('assert');
 describe('Browser', () => {

@@ -10,7 +10,7 @@ browserStub.prototype.getSessionId = function(){
     return this._sessionId;
 }
 
-const BrowserStore = proxyquire('../../browser-store', {
+const BrowserStore = proxyquire('../../lib/server/browser-store', {
   'selenium-webdriver': webdriverStub,
   'selenium-webdriver/http': wdHttpStub,
   './browser': browserStub
