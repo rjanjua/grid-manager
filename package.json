@@ -7,9 +7,8 @@
     "grid-manager": "./bin/grid-manager"
   },
   "scripts": {
-
     "test": "./node_modules/.bin/mocha specs --recursive --timeout=10000",
-    "e2e": "./node_modules/.bin/mocha specs/e2e --timeout=10000",
+    "e2e": "./node_modules/.bin/mocha specs/e2e --timeout=60000",
     "unit": "./node_modules/.bin/mocha specs/unit --timeout=2000",
     "start": "node app.js"
   },
@@ -29,6 +28,7 @@
     "nock": "^9.0.2",
     "proxyquire": "^1.7.10",
     "request": "^2.79.0",
+    "selenium-standalone": "^5.9.0",
     "sinon": "^1.17.6",
     "supertest": "^2.0.1",
     "unexpected": "^10.20.0"

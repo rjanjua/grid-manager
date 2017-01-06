@@ -29,7 +29,7 @@ Server.prototype.bootstrap = function() {
   });
 
   this.app.get('/get', (req, res) => { 
-    this.browserStore.removeInactiveSessions()
+    this.browserStore.fillSessionPool()
     .then( () => this.browserStore.getSession())
     .then((sessionId) => {
       res.status(200).json({sessionId: sessionId});
@@ -42,7 +42,7 @@ Server.prototype.bootstrap = function() {
   this.app.post('/release/:sessionId', (req, res) => { 
     
     const sessionId = req.params.sessionId;
-        console.log("release  session: ", sessionId);
+    console.log("release  session: ", sessionId);
 
     this.browserStore.releaseSession(sessionId)
     .then( () => {
@@ -51,11 +51,23 @@ Server.prototype.bootstrap = function() {
   });
 
   this.app.get('/sessions', (req, res) => {
-    const sessions = this.browserStore.getSessionList();
+    this.browserStore.removeInactiveSessions()
+    .then ( () => {
+      const sessions = this.browserStore.getSessionList();
 
-    const responseBody = { sessions: sessions };
+      const responseBody = { sessions: sessions };
 
-    res.status(200).json(responseBody);
+      res.status(200).json(responseBody);
+    });
+  });
+
+  this.app.post('/startSessions/:numberOfSessions', (req, res) => {
+    const numberOfSessions = parseInt(req.params.numberOfSessions);
+    this.browserStore.setSessionPoolLimit(numberOfSessions);
+    this.browserStore.fillSessionPool()
+    .then( (sessions) => {
+      res.status(200).json({ sessions: sessions });
+    });
   });
 
   this.server = this.app.listen(9876, function () {
@@ -63,8 +75,8 @@ Server.prototype.bootstrap = function() {
   });
 }
 
-Server.prototype.close = function(){
-  this.server.close();
+Server.prototype.close = function(cb){
+  this.server.close(cb);
 }
 
 Server.prototype.start = function() {

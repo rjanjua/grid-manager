@@ -44,6 +44,22 @@ BrowserStore.prototype.startSession = function(){
   }); 
 }
 
+BrowserStore.prototype.ensureNumberOfSessions = function(numberOfSessions) {
+  return this.removeInactiveSessions()
+  .then( () => this.getActiveSessions())
+  .then(sessions => {
+    const startSessionPromises = [];
+    const numberOfSessionsToCreate = numberOfSessions - sessions.length;
+    for(var i = 0; i < numberOfSessionsToCreate; i++) {
+      startSessionPromises.push(this.startSession());
+    }
+    return Promise.all(startSessionPromises);
+  })
+  .then( () => {
+    return this.browsers.map( b => b._sessionId);
+  });
+}
+
 BrowserStore.prototype._addBrowserToStore = function(session){
     const browser = new Browser(session);
     this.browsers.push(browser);
@@ -121,6 +137,11 @@ BrowserStore.prototype.releaseSession = function(sessionId){
   }
 }
 
+BrowserStore.prototype.fillSessionPool = function(){
+  console.log('sdasdasdasdas: ', this.sessionPoolLimit)
+  return this.ensureNumberOfSessions(this.sessionPoolLimit);
+}
+
 BrowserStore.prototype.init = function(){
   activeSessions = this.getActiveSessions(this.gridUrl);
 
@@ -160,6 +181,10 @@ BrowserStore.prototype.getActiveSessions = function(){
       resolve(sessions);
     });
   })
+}
+
+BrowserStore.prototype.setSessionPoolLimit = function(n){
+  this.sessionPoolLimit = n;
 }
 
 function parseSessions(message) {
