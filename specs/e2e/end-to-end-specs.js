@@ -210,10 +210,51 @@ describe('grid-manager', () => {
       .post('/new')
       .expect(200, delayCloseSession);
     })
-
-    it('does not try to get the closed browser', () => {
-
-    })
   });
 
+  describe('when all browsers are in use', () => {
+
+    it.only('waits 10 seconds to wait for a browser to become available', (done) => {
+
+      const sessions = [];
+
+      const get = (cb) => {
+        agent
+        .get('/get')
+        .expect(200)
+        .end( (err, res) => {
+          sessions.push(res.body.sessionId);
+        })
+      };
+
+      agent
+      .post('/startSessions/5')
+      .expect(200)
+      .end( (err, res) => {
+        get();
+        get();
+        get();
+        get();
+        get();
+        setTimeout( () => assert.equal(res.body.sessions.length, 5), 500);
+        setTimeout( () => agent
+                          .get('/get')
+                          .expect(200)
+                          .end( (err, res) => {
+                            console.log(err);
+                            console.log(res.body);
+                            assert.equal(res.body.sessionId, sessions[0]);
+                            done()
+                          }), 1000);
+        
+        setTimeout( () => agent
+        .post('/release/' + sessions[0])
+        .expect(200)
+        .end( (err, res) => {
+
+        }), 8500);
+
+      });
+    });
+  });
 });
